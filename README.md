@@ -1,5 +1,5 @@
 # eFuse Voltmeter
-![Robot_Front]([)](https://github.com/jerryok826/eFuse_voltmeter/blob/main/eFuse_voltmater_r2%202.jpeg)
+![Robot_Front]((https://github.com/jerryok826/eFuse_voltmeter/blob/main/eFuse_voltmater_r2%202.jpeg)
 
 ## Project Description
 I always thought most laborary power supplies take up to much bench space. This design is just three inches by six inches and runs off a wall wart. It can also be powered from a lithium battery pack. The specs are 0 to 15 volts with a maximum output current of 1.5 amps. It has two volt presets and two output controls. One for voltage the other for current limiting. There is one additional button for output enable. It can can also be controlled remotely via USB using ModBus. There is also an realtime analog current bar graph on the oled display.
