@@ -1,5 +1,5 @@
 # eFuse Voltmeter
-![Robot_Front](https://github.com/jerryok826/eFuse_voltmeter/blob/main/eFuse_Voltmeter_r3.jpeg)
+![Robot_Front](https://github.com/jerryok826/eFuse_voltmeter/blob/main/eFuse_V_rev4.jpeg)
 
 ## Project Description
 This is a protection circuit for other board. It can be powered from wall wart or a battery. 
