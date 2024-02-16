@@ -2,20 +2,20 @@
 ![Alt text](https://github.com/jerryok826/eFuse_voltmeter/blob/main/Pictures/IMG_5815.jpeg)
 
 ## Project Description
-This is a protection circuit for other board. It can be powered from wall wart or a battery. 
+eFuse_Voltmeter is a protection circuit for other devices. The initial reason was to protect a Ham radio.
+It can be powered from wall wart or a battery. 
 Features:
-1. Keyed input power connectors.
-2. Reverse power protection.
-3. Adjustable over voltage protection
-4. Adjustable over current protection.
-5. Voltage and current monitoring.
-6. Output power control.
-7. Output power disconnect on fault.
+1. Reverse power protection.
+2. Adjustable over voltage protection
+3. Adjustable over current protection.
+4. Voltage and current monitoring.
+5. Output power control.
+6. Output power disconnect on fault.
+7. Keyed input power connectors.
 
-When an over voltage or an over current event happen the boards output will be disable. This state is latch until the reset button pressed. Apond a fault a auduo alarm is also actived and a fault LED is lite. The fault is indicted by its measurement value will turn RED and RED led is lite
+When an over voltage or an over current event happens the board will disable its output. This fault state is latch until the control buttons is pressed. Apond a fault a audiuo alarm is also actived and a fault LED is lite. The fault is indicted by its measurement value will turn RED and RED led is lite
  
 ### Project Status
-The project is basicly comlete. Working on improvements.
+the project is basically complete. Working on improvements.
 
 ## Design Files
-### Electrical Design Files
