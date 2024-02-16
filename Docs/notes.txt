@@ -1,0 +1,68 @@
+
+https://learn.adafruit.com/adafruit-hallowing/uf2-bootloader-details
+
+https://github.com/adafruit/Adafruit_Learning_System_Guides/blob/main/Factory_Tests/Feather_ESP32S2_TFT_FactoryTest/Feather_ESP32S2_TFT_FactoryTest.ino
+
+14:25:53.303 -> [0;32mI (611) esp_image: segment 0: paddr=00010020 vaddr=3c040020 size=0edf4h ( 60916) map[0m
+14:25:53.303 -> [0;32mI (621) esp_image: segment 1: paddr=0001ee1c vaddr=3fc916f0 size=011fch (  4604) load[0m
+14:25:53.303 -> [0;32mI (622) esp_image: segment 2: paddr=00020020 vaddr=42000020 size=33ec0h (212672) map[0m
+14:25:53.336 -> [0;32mI (658) esp_image: segment 3: paddr=00053ee8 vaddr=3fc928ec size=02634h (  9780) load[0m
+14:25:53.336 -> [0;32mI (661) esp_image: segment 4: paddr=00056524 vaddr=40374000 size=0d6e4h ( 55012) load[0m
+14:25:53.370 -> [0;32mI (680) boot: Loaded app from partition at offset 0x10000[0m
+14:25:53.370 -> [0;32mI (681) boot: Disabling RNG early entropy source...[0m
+14:25:53.370 -> E (699) esp_core_dump_flash: No core dump partition found!
+14:25:53.370 -> E (699) esp_core_dump_flash: No core dump partition found!
+
+
+
+
+// reg at page 21
+10:32:37.497 -> INA228 reg[00] 0x0000
+10:32:37.497 -> INA228 reg[01] 0xFB68
+10:32:37.497 -> INA228 reg[02] 0x1000
+10:32:37.497 -> INA228 reg[03] 0x0000
+10:32:37.497 -> INA228 reg[04] 0x00D2
+10:32:37.497 -> INA228 reg[05] 0x0DCB
+10:32:37.497 -> INA228 reg[06] 0x0ADE
+10:32:37.530 -> INA228 reg[07] 0x00D2
+10:32:37.530 -> INA228 reg[08] 0x002D
+10:32:37.530 -> INA228 reg[09] 0x0000
+10:32:37.530 -> INA228 reg[0A] 0x0000
+10:32:37.530 -> INA228 reg[0B] 0x4003 // DIAG_ALRT pg 26
+10:32:37.530 -> INA228 reg[0C] 0x7FFF
+10:32:37.530 -> INA228 reg[0D] 0x8000
+10:32:37.530 -> INA228 reg[0E] 0x7FFF
+10:32:37.530 -> INA228 reg[0F] 0x0000
+10:32:37.530 -> INA228 reg[10] 0x7FFF
+10:32:37.530 -> INA228 reg[11] 0xFFFF
+10:32:37.530 -> INA228 reg[3E] 0x5449
+10:32:37.530 -> INA228 reg[3F] 0x2281
+
+10:32:37.530 -> Averaging counts: 16
+10:32:37.530 -> Voltage conversion time: 150 uS
+10:32:37.530 -> Current conversion time: 280 uS
+
+Address Acronym
+Register NameRegister Size (bits)
+Section
+0hCONFIGConfiguration16Go
+1hADC_CONFIGADC Configuration16Go
+2hSHUNT_CALShunt Calibration16Go
+3hSHUNT_TEMPCOShunt Temperature Coefficient16Go
+4hVSHUNTShunt Voltage Measurement24Go
+5hVBUSBus Voltage Measurement24Go
+6hDIETEMPTemperature Measurement16Go
+7hCURRENTCurrent Result24Go
+8hPOWERPower Result24Go
+9hENERGYEnergy Result40Go
+AhCHARGECharge Result40Go
+BhDIAG_ALRTDiagnostic Flags and Alert16Go
+ChSOVLShunt Overvoltage Threshold16Go
+DhSUVLShunt Undervoltage Threshold16Go
+EhBOVLBus Overvoltage Threshold16Go
+FhBUVLBus Undervoltage Threshold16Go
+10hTEMP_LIMITTemperature Over-Limit
+Threshold16Go
+11hPWR_LIMITPower Over-Limit Threshold16Go
+3EhMANUFACTURER_IDManufacturer ID16Go
+3FhDEVICE_IDDevice ID16Go
