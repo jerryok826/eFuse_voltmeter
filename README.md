@@ -1,5 +1,5 @@
 # eFuse Voltmeter
-![Alt text](https://github.com/jerryok826/eFuse_voltmeter/blob/main/Pictures/IMG_5815.jpeg)
+![Alt text](https://github.com/jerryok826/eFuse_voltmeter/blob/main/Pictures//eFuse_Volt.jpeg)
 
 ## Project Description
 eFuse_Voltmeter is a protection circuit for other devices. The initial reason was to protect a Ham radio.
