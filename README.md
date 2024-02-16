@@ -1,6 +1,9 @@
 # eFuse Voltmeter
 ![Alt text](https://github.com/jerryok826/eFuse_voltmeter/blob/main/Pictures//eFuse_Volt.jpeg)
 
+# eFuse Voltmeter in fault
+![Alt text](https://github.com/jerryok826/eFuse_voltmeter/blob/main/Pictures/eFuse_volt_fault.jpeg)
+
 ## Project Description
 eFuse_Voltmeter is a protection circuit for other devices. The initial reason was to protect a Ham radio.
 It can be powered from wall wart or a battery. 
