@@ -1,5 +1,5 @@
 # eFuse Voltmeter
-![Alt text](https://github.com/jerryok826/eFuse_voltmeter/blob/main/Pictures//eFuse_Volt.jpeg)
+![Alt text](https://github.com/jerryok826/eFuse_voltmeter/blob/main/Pictures/eFuse_Volt.jpeg)
 
 # eFuse Voltmeter in fault
 ![Alt text](https://github.com/jerryok826/eFuse_voltmeter/blob/main/Pictures/eFuse_volt_fault.jpeg)
