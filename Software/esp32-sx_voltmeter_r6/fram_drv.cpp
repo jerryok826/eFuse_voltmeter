@@ -102,7 +102,7 @@ fram_read_bytes (uint16_t fram_adr, uint8_t * ptr, int len)
   unsigned long stop_time;
 
   Wire.begin ();
-  Wire.setClock(800000);
+  //Wire.setClock(800000);
 
   Wire.beginTransmission (FRAME_I2C_ADR);       // Begin communication with slave address 85 (0x55) 
   Wire.write (fram_adr >> 8);
@@ -129,7 +129,7 @@ fram_write_bytes (uint16_t fram_adr, uint8_t * ptr, int len)
   unsigned long stop_time;
 
   Wire.begin ();
-  Wire.setClock(800000);
+  //Wire.setClock(800000);
 
   Wire.beginTransmission (FRAME_I2C_ADR);       // Begin communication with slave address 85 (0x55) 
   Wire.write (fram_adr >> 8);
@@ -143,6 +143,11 @@ fram_write_bytes (uint16_t fram_adr, uint8_t * ptr, int len)
   Serial.printf ("%s(%d) Adr 0x%04X: 0x%02X 0x%02X 0x%02X 0x%02X, %ld us\n", __func__, __LINE__, fram_adr,
                  ptr[0], ptr[1], ptr[2], ptr[3], stop_time);
 
+  uint8_t rd_back[10];
+  fram_read_bytes (fram_adr, rd_back, len);
+  if (ptr[0] != rd_back[0]) {
+      Serial.printf ("%s(%d) ReadBack err 0x%04X: 0x%02X 0x%02X\n", __func__, __LINE__, fram_adr, ptr[0], rd_back[0]);
+  }
   return 0;
 }
 
@@ -177,7 +182,7 @@ ina228_reg_read(int reg)
 
   reg_value = (data[0]<<8) | data[1];
 //  Serial.printf ("INA228 reg[%02X] 0x%04X\n", reg, reg_value);
-  return 0;
+  return reg_value;
 }
 
 int

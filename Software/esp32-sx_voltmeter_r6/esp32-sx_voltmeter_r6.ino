@@ -6,6 +6,7 @@
 #include <Adafruit_ADS1X15.h>
 #include "Adafruit_INA228.h"
 
+#define ESP32 ///
 //#define ENCODER_DO_NOT_USE_INTERRUPTS
 #define ENCODER_USE_INTERRUPTS
 #include <Encoder.h>  // https://github.com/PaulStoffregen/Encoder/
@@ -39,6 +40,7 @@ const int OV_led = 11;          //8;        // GPIO
 const int OUTPUT_led = 10;      // 10;      // GPIO
 const int BUZZER = 15;          // 6;       // GPIO
 const int FETDRV = 14;          // GPIO
+const int INA228_ALR = 13;      // GPIO13  INA228_ALR
 
 // GPIO inputs
 const int OP_SW = 9;            // 18;       // GPIO18 ??
@@ -50,7 +52,7 @@ const int OV_ENC_B = 17;
 const int OC_ENC_A = 6; 
 const int OC_ENC_B = 5; 
 
-const int INA228_ALR = 6;
+int ina228_alr_int_flag=0; // int flag
 
 static int output_state = 0;
 static int fault_state = 0;
@@ -65,7 +67,7 @@ static float max_current_limit = 10.0;  // normal value of 4A
 static float fault_voltage = 0.0;
 static float fault_current = 0.0;
 
-float Position_Diff = 0.0;
+long Position_Diff = 0.0;
 static int dirty_ov_setting = 0;
 static int dirty_oc_setting = 0;
 
@@ -81,11 +83,11 @@ static int dirty_oc_setting = 0;
 Encoder OC_Enc(OC_ENC_A,OC_ENC_B); // 5,6); // 5, 6);
 Encoder OV_Enc(OV_ENC_B,OV_ENC_A); // 17,18); // 5, 6);
 
-long old_OV_Position  = 0;
-long new_OV_Position = 0;
+static signed long old_OV_Position = 0;
+static signed long new_OV_Position = 0;
 
-long old_OC_Position  = 0;
-long new_OC_Position = 0;
+static long old_OC_Position = 0;
+static long new_OC_Position = 0;
 
 #define OV_FAULT_BIT  (0x1 << 4)
 #define OC_FAULT_BIT  (0x1 << 6)
@@ -156,11 +158,9 @@ buzzer_set (int state)
   pinMode (BUZZER, OUTPUT);
   if (state == 0) {
     digitalWrite (BUZZER, LOW); // off
-    oc_fault = 0;
   }
   else {
     digitalWrite (BUZZER, HIGH); // on
-    oc_fault = 1;
   }
 }
 
@@ -174,17 +174,18 @@ voltage_limit_set (float voltage)
 //  ina228.reg_write (0x0e, reg_value);
   ina228_reg_write(0x0e, reg_value);
 
+  Serial.printf ("%s(%d) V Limit set: %03.3fV, reg[%d]: 0x%04X\n", __func__,__LINE__,voltage, 0x0e, reg_value);
+
   // set enable V fault
   reg_value = ina228_reg_read (0x0B); 
 //  reg_value = ina228.reg_read (0x0B);   // jok
+  reg_value &= (1 << 6); // Clear all but OC flag
   reg_value |= 1 << 4;          // bus over voltage
+  reg_value |= 1 << 15;         // Set Alert latch bit
 //  ina228.reg_write (0x0b, reg_value);
   ina228_reg_write(0x0b, reg_value);
 
-//  reg_dump (0x0E);
-//  reg_dump (0x0B);
-
-  Serial.printf ("%s(%d) V Limit set: %03.3fV, reg[%d]: 0x%04X\n", __func__,__LINE__,voltage, 0x0B, reg_value);
+  Serial.printf ("%s(%d) over V alert enabled: %03.3fV, reg[%d]: 0x%04X\n", __func__,__LINE__,voltage, 0x0B, reg_value);
 }
 
 void
@@ -195,18 +196,18 @@ current_limit_set (float current)
 
   // set current limit
   shunt_voltage = current * sense_resistor;
-
-  ina228_reg_write(0x0C, (float) (shunt_voltage / 0.000005));
+//  ina228.reg_write (0x0c, (float) (shunt_voltage / 0.000005));
+  ina228_reg_write (0x0c, (float) (shunt_voltage / 0.000005));
+  Serial.printf ("%s(%d) I Limit set: %03.3fV, reg[%d]: 0x%04X\n", __func__,__LINE__,current, 0x0c, reg_value);
 
   // set enable V fault
   reg_value = ina228_reg_read (0x0B); 
 //  reg_value = ina228.reg_read (0x0B);   // jok
-  reg_value |= 1 << 6;          // bus over voltage
-//  ina228.reg_write (0x0b, reg_value);
+  reg_value &= (1 << 4); // Clear all but OV flag
+  reg_value |= 1 << 6;          // bus over current
+  reg_value |= 1 << 15;         // Set Alert latch bit
+//  ina228.reg_write (0x0B, reg_value);
   ina228_reg_write(0x0b, reg_value);
-
-//  reg_dump (0x0c);
-//  reg_dump (0x0B);
 
   Serial.printf ("%s(%d) I Limit set: %03.3fA, reg[%d]: 0x%04X\n", __func__,__LINE__, current, 0x0c, reg_value);
 }
@@ -268,7 +269,7 @@ fet_drv_state (int state)
   if (state) {
     output_state = 1;
     output_led_set (1);
-    digitalWrite (FETDRV, HIGH);        // on
+    digitalWrite (FETDRV, HIGH); // on
   }
   else {
     output_state = 0;
@@ -309,7 +310,7 @@ read_voltage_current (float *voltage, float *current)
 int
 alarm_reset_sw_state (void)
 {
-  if ((digitalRead (OV_ENC_SW) == 0) || (digitalRead (OC_ENC_SW) == 0)) { // AL_RST_SW) == 0) {
+  if ((digitalRead (OV_ENC_SW) == 0) || (digitalRead (OC_ENC_SW) == 0)) { 
     return 1;
   }
   else {
@@ -371,13 +372,12 @@ display_readings (void)
   }
   canvas.setTextColor (ST77XX_GREEN);
 
-//     canvas.printf ("%7.1fC\n", ina228.readDieTemp ());
   canvas.setTextColor (ST77XX_YELLOW); // output_state = 1;
   canvas.setFont (&FreeSans12pt7b);
   canvas.printf (" %12.2fV Limits\n", voltage_limit);
   canvas.printf (" %14.2fA  %02.1fC\n", current_limit,temperature );
 
-//     canvas.printf ("012345678901234567\n");
+//  canvas.printf ("012345678901234567\n");
   display.drawRGBBitmap (0, 0, canvas.getBuffer (), 240, 135);
 }
 
@@ -401,16 +401,22 @@ display_update (void)
 //  Serial.printf(" %3.3fV,  %3.3fA, %3.1f C\n",voltage,current,temperature);
 }
 
+// #define DEFAULT_OV_LIMIT  (13.5)
+// #define DEFAULT_OC_LIMIT  (2.0)
 float getVoltageSetting()
 {
-//  unsigned long start_time = micros();
+  unsigned long start_time = micros();
   uint32_t voltage=0;
   float voltage_limit;
 
   fram_read_bytes (0, (uint8_t *)&voltage, sizeof(voltage));
   voltage_limit = ((float)voltage) /  1000.0;
-
-//  Serial.printf("%s(%d) Voltage_limit get value: %3.3f, %ld us\n", __func__,__LINE__,voltage_limit, micros() - start_time);
+  if (voltage_limit > DEFAULT_OV_LIMIT) {
+      Serial.printf("%s(%d) Out of range Voltage limit from FRAM: %3.3f, %ld us\n", __func__,__LINE__,voltage_limit, micros() - start_time);
+      voltage_limit = DEFAULT_OV_LIMIT;
+      saveVoltageSetting(voltage_limit);
+  } 
+  Serial.printf("%s(%d) Voltage limit from FRAM: %3.3f, %ld us\n", __func__,__LINE__,voltage_limit, micros() - start_time);
   return voltage_limit;
 }
 
@@ -449,6 +455,14 @@ void saveCurrentSetting(float current_limit)
 //  Serial.printf("%s(%d) current_limit set value: %3.3f, %ld us\n", __func__,__LINE__,current_limit, micros() - start_time);
 }
 
+int isr_cntr=0;
+
+void IRAM_ATTR isr() {
+//    ina228_reg_read (0x0B); // read alert reg to clearit
+    ina228_alr_int_flag=1;
+    isr_cntr++;
+}
+
 void
 setup ()
 {
@@ -460,17 +474,19 @@ setup ()
   buzzer_set (0);
   fet_drv_state (0);
 
-  delay(100);
+  delay(1000);
+  Serial.printf("=====================================================\n");
+  Serial.printf("=====================================================\n");
   Serial.printf("eFuse_voltmeter Init, Built: %s %s\n",__DATE__,__TIME__);
 
   // Dont know way this is required, Without it OV enc does not work. GPIO18
-  pinMode (OV_ENC_A, INPUT);  
+  //pinMode (OV_ENC_A, INPUT);  
 
   button.begin (OP_SW);
   button.setToggleState (0);    // set initial state 0 or 1
   button.setToggleTrigger (0);  // set trigger onPress: 0, or onRelease: 1
 
-  // turn on backlite Do this later
+  // turn backlite on later
   pinMode (TFT_BACKLITE, OUTPUT);
   digitalWrite (TFT_BACKLITE, LOW); // Keep backlight off for now
 
@@ -490,34 +506,21 @@ setup ()
 //  pinMode (OC_ENC_B, INPUT_PULLUP); // Does not cause ENC problems if commented out
 //  pinMode (OC_ENC_A, INPUT_PULLUP); // Does not cause ENC problems if commented out
 #endif
-
-//  pinMode (OV_led, OUTPUT);
-//  pinMode (OC_led, OUTPUT);
-//  pinMode (OUTPUT_led, OUTPUT);
-//  pinMode (BUZZER, OUTPUT);
-//  pinMode (FETDRV, OUTPUT);
-
-  // Set in default state
-//  digitalWrite (OUTPUT_led, 1);
-//  digitalWrite (OV_led, 1);
-//  digitalWrite (OC_led, 1);
-//  digitalWrite (BUZZER, 0);
-  buzzer_set (0);
-
-//  digitalWrite (FETDRV, 0);
   
-//  i2c_scan ();
+//  i2c_scan (); // debug routines
 //  fram_get_dev_id ();
 
+  // Turn LEED and Buzzer on to sound reboot
   oc_led_set (1); // Turn on fault Leds, boot up test
   ov_led_set (1); 
   output_led_set (1); 
   buzzer_set (0); // Keep buzzer off
 
-// If fault switch is press during boot, than peset fault limts
+// If fault switch is press during boot, than preset fault limts
   if (alarm_reset_sw_state ()) {
       saveVoltageSetting(DEFAULT_OV_LIMIT);
       saveCurrentSetting(DEFAULT_OC_LIMIT);
+      Serial.printf("Fault SW pressed, Used preset V & I limits.\n");
   }
   Serial.println ("Init I2C Chips");
 
@@ -555,8 +558,8 @@ setup ()
   ina228.setShunt (sense_resistor, 10.0);       // updated to match MY board
   ina228.setAveragingCount (INA228_COUNT_16);
   uint16_t counts[] = { 1, 4, 16, 64, 128, 256, 512, 1024 };
-  Serial.print ("Averaging counts: ");
-  Serial.println (counts[ina228.getAveragingCount ()]);
+  //Serial.print ("Averaging counts: ");
+  //Serial.println (counts[ina228.getAveragingCount ()]);
 
   // set the time over which to measure the current and bus voltage
   ina228.setVoltageConversionTime (INA228_TIME_150_us);
@@ -564,7 +567,7 @@ setup ()
 
   // default polarity for the alert is low on ready, but
   // it can be inverted!
-  ina228.setAlertPolarity (INA228_ALERT_POLARITY_INVERTED);
+  ina228.setAlertPolarity (INA228_ALERT_POLARITY_INVERTED); // Active low open-collector
 
   display.init (135, 240);      // Init ST7789 240x135
   display.setRotation (3);
@@ -581,6 +584,8 @@ setup ()
   canvas.printf (" Voltmeter");
   display.drawRGBBitmap (0, 0, canvas.getBuffer (), 240, 135);
   digitalWrite (TFT_BACKLITE, HIGH);    // turn backlight on
+  Serial.printf("Display Init done\n");
+
   delay (1000);
 
   alert_bell (1);
@@ -594,8 +599,34 @@ setup ()
   oc_led_set (0);
 
   // reload old V & C limits
-  voltage_limit = getVoltageSetting();
+//#define DEFAULT_OV_LIMIT  (13.5)
+//#define DEFAULT_OC_LIMIT  (2.0)
+// static float max_voltage_limit = 20.0;
+// static float max_current_limit = 10.0;  // normal value of 4A
+
+  voltage_limit = getVoltageSetting(); // from FRAM
+  if (voltage_limit > max_voltage_limit) { // 20.0
+      Serial.printf("Out of range Volt limit: %3.2fV, Used default value\n", voltage_limit);
+      voltage_limit = DEFAULT_OV_LIMIT;
+  }
   current_limit = getCurrentSetting();
+  if (current_limit > max_current_limit) {  // 10.0
+      Serial.printf("Out of range current limit: %3.2fA, Used default value\n", current_limit);
+      current_limit = DEFAULT_OC_LIMIT;    
+  }
+  
+  Serial.printf("Using saved Voltage limit: %3.2fV\n", voltage_limit);
+  Serial.printf("Using saved Current limit: %3.2fA\n", current_limit );
+
+  voltage_limit_set (voltage_limit);
+  current_limit_set (current_limit);
+
+  Serial.printf("Setup done, jump to Loop\n");
+
+  // enable fault interrupt
+  ina228_alr_int_flag=0;
+  pinMode(INA228_ALR, INPUT_PULLUP);
+  attachInterrupt(INA228_ALR, isr, FALLING);
 }
 
 void
@@ -610,8 +641,9 @@ loop ()
 
   if ((millis () - settings_update_time) > 1000) {
     settings_update_time = millis ();
+
     if (dirty_ov_setting) {
-       voltage_limit_set (voltage_limit);
+      voltage_limit_set (voltage_limit);
        saveVoltageSetting(voltage_limit);
        dirty_ov_setting = 0;
        Serial.printf ("%s(%d) Voltage Limit Up date: voltage: %03.3fV, current: %03.3fA\n", __func__, __LINE__,
@@ -634,20 +666,29 @@ loop ()
   // update fault pot setting
   if ((millis () - pot_update_time) > 200) {
     pot_update_time = millis ();
+
+    // Check voltage setting change
+    float voltage_diff=0.0;
     new_OV_Position = OV_Enc.read();
     if (new_OV_Position != old_OV_Position) {
-      Position_Diff = (new_OV_Position - old_OV_Position) * -0.05;
-      voltage_limit = voltage_limit - Position_Diff;
+      Position_Diff = new_OV_Position - old_OV_Position;
+      voltage_diff = ((float)Position_Diff) * -0.05;
+      voltage_limit = voltage_limit - voltage_diff;
+      Serial.printf ("%s(%d) OV %d %d %d\n", __func__, __LINE__,new_OV_Position,old_OV_Position ,Position_Diff);
       old_OV_Position = new_OV_Position;
 //      saveVoltageSetting(voltage_limit);
 //      voltage_limit_set (voltage_limit);  // Not sure this is required
       dirty_ov_setting = 1;
     }
 
+    // Check Current setting change
+    float current_diff=0.0;
     new_OC_Position = OC_Enc.read();
     if (new_OC_Position != old_OC_Position) {
-      Position_Diff = (new_OC_Position - old_OC_Position) * -0.05;
-      current_limit = current_limit - Position_Diff;
+      Position_Diff = new_OC_Position - old_OC_Position;
+      current_diff = ((float)Position_Diff) * -0.05;
+      current_limit = current_limit - current_diff;
+      Serial.printf ("%s(%d) OC %d %d %d\n", __func__, __LINE__,new_OC_Position,old_OC_Position ,Position_Diff);
       old_OC_Position = new_OC_Position;
 //      saveCurrentSetting(current_limit);
 //      current_limit_set (current_limit); // Not sure this is required
@@ -655,14 +696,26 @@ loop ()
     }
   }
 
-  if ((millis () - fault_update_time) > 10) {
-    fault_update_time = millis ();
-    // check OC & OV faults
-
     button.poll ();             // Check output button state
     op_sw_state = button.toggle ();
 
-    alert_status = ina228.alertFunctionFlags ();
+  if (((millis () - fault_update_time) > 10) || (ina228_alr_int_flag)) {
+    fault_update_time = millis ();
+    alert_status = ina228_reg_read(0x0B);
+    // check OC & OV faults
+    if (ina228_alr_int_flag) {
+       ina228_alr_int_flag = 0;
+      Serial.printf ("%s(%d) ina228_alr_int_flag set 0x%04X\n", __func__, __LINE__,alert_status);
+    }
+
+//    button.poll ();             // Check output button state
+//    op_sw_state = button.toggle ();
+
+    //alert_status = ina228.alertFunctionFlags (); // reg 0xB
+    //alert_status = ina228.reg_read (0x0B);
+//    alert_status = ina228_reg_read(0x0B);
+
+  //  Serial.printf ("%s(%d) alert_status: 0x04%\n", __func__, __LINE__, alert_status);
     if (alert_status & (OV_FAULT_BIT | OC_FAULT_BIT)) {
       read_voltage_current (&fault_voltage, &fault_current);  // capture current readings
       fault_state = 1;
@@ -678,7 +731,7 @@ loop ()
       if (alert_status & OC_FAULT_BIT) {
          Serial.printf("%s(%d) Current Fault: %03.3fA, limit: %03.3fA, status reg: 0x%04X\n", 
                                 __func__, __LINE__, fault_current, current_limit, alert_status);
-      } 
+     } 
     }
     else if (fault_state == 0) {
       ov_led_set (0);
@@ -698,7 +751,6 @@ loop ()
     else {
       fet_drv_state (0);
     }
-//    Serial.printf ("\n alert_Flags: 0x%04X %d\n", alert_status, op_sw_state);
   }
 
   yield ();
