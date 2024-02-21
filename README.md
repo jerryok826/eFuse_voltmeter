@@ -18,7 +18,7 @@ Features:
 6. Output power disconnected on fault.
 7. Audio alarm on fault.
 
-When an over voltage or an over current event happens the board will disable its output. This fault state is latch until the control buttons is pressed. Apond a fault a audiuo alarm is also actived and a fault LED is lite. The fault is indicted by its measurement value will turn RED and the fault RED led is lite
+When an over voltage or an over current event happens the board will disable its output. This fault state is latch until the control buttons is pressed. Apond a fault a audiuo alarm is also actived and a fault LED is lite. The fault is indicted by its measurement value will turn RED and the fault RED led is lite. A fault is cleared by pressing the adjusement button. The output button needs to be press again to reable the boards output.
  
 ### Project Status
 The project is basically complete. Working on improvements.
