@@ -3,7 +3,6 @@
 #include <Toggle.h>
 #include <Adafruit_GFX.h>
 #include <Adafruit_ST7789.h>    // Hardware-specific library for ST7789
-#include <Adafruit_ADS1X15.h>
 #include "Adafruit_INA228.h"
 
 #define ESP32 ///
