@@ -5,9 +5,9 @@
 ![Alt text](https://github.com/jerryok826/eFuse_voltmeter/blob/main/Pictures/eFuse_volt_fault.jpeg)
 
 ## Project Description
-eFuse_Voltmeter is a protection circuit for down stream devices. The initial reason was to protect a Ham radio when adjustmenting power mosfet transistors biasing.
+eFuse_Voltmeter is a protection circuit for down stream devices. The initial reason for the deviec was to protect a Ham radio when adjustmenting power mosfet transistors biasing.
 
-It can be powered from any DC power source between 5 to 25 volts. Its been test up to 6. Except for the mosfets it should work at much higher currents. At 5 amps the two inline mostfets drop 150millvolts and the sense resistor drops 81 millvolts. So two the mosfets should upgraded. 
+It can be powered from any DC power source between 5 to 25 volts. Its been test up to 6. Except for the mosfets it should work at much higher currents. At 5 amps the two inline mostfets drop 150millvolts each and the sense resistor drops 81 millvolts. So two the mosfets should upgraded. 
 
 Features:
 1. Reverse power protection.
