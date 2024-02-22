@@ -11,7 +11,7 @@ It can be powered from any DC power source between 5 to 25 volts. Its been test 
 
 Features:
 1. Reverse power protection.
-2. Adjustable over voltage input protection
+2. Adjustable input over voltage input protection
 3. Adjustable over current protection.
 4. Voltage and current monitoring.
 5. Output power control.
