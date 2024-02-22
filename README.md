@@ -7,7 +7,7 @@
 ## Project Description
 eFuse_Voltmeter is a protection circuit for down stream devices. The initial reason was to protect a Ham radio when doing bias adjustments mosfet power transistors.
 
-It can be powered from wall wart or a battery. 
+It can be powered from any DC power source between 5 to 25 volts.
 
 Features:
 1. Reverse power protection.
