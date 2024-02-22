@@ -696,8 +696,8 @@ loop ()
     }
   }
 
-    button.poll ();             // Check output button state
-    op_sw_state = button.toggle ();
+  button.poll ();             // Check output button state
+  op_sw_state = button.toggle ();
 
   if (((millis () - fault_update_time) > 10) || (ina228_alr_int_flag)) {
     fault_update_time = millis ();
@@ -705,17 +705,9 @@ loop ()
     // check OC & OV faults
     if (ina228_alr_int_flag) {
        ina228_alr_int_flag = 0;
-      Serial.printf ("%s(%d) ina228_alr_int_flag set 0x%04X\n", __func__, __LINE__,alert_status);
+//      Serial.printf ("%s(%d) ina228_alr_int_flag set 0x%04X\n", __func__, __LINE__,alert_status);
     }
 
-//    button.poll ();             // Check output button state
-//    op_sw_state = button.toggle ();
-
-    //alert_status = ina228.alertFunctionFlags (); // reg 0xB
-    //alert_status = ina228.reg_read (0x0B);
-//    alert_status = ina228_reg_read(0x0B);
-
-  //  Serial.printf ("%s(%d) alert_status: 0x04%\n", __func__, __LINE__, alert_status);
     if (alert_status & (OV_FAULT_BIT | OC_FAULT_BIT)) {
       read_voltage_current (&fault_voltage, &fault_current);  // capture current readings
       fault_state = 1;
@@ -725,8 +717,10 @@ loop ()
       button.setToggleState (0);        // reset button toggle state
       alert_bell (1);
       if (alert_status & OV_FAULT_BIT) {
+#if 0
          Serial.printf("%s(%d) Voltage Fault: %03.3fV, limit: %03.3fV, status reg: 0x%04X\n", 
                                 __func__, __LINE__, fault_voltage, voltage_limit, alert_status);
+#endif   
       } 
       if (alert_status & OC_FAULT_BIT) {
          Serial.printf("%s(%d) Current Fault: %03.3fA, limit: %03.3fA, status reg: 0x%04X\n", 
