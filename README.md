@@ -22,5 +22,3 @@ When an over voltage or an over current event happens the board will disable its
  
 ### Project Status
 The project is basically complete. Working on improvements.
-
-## Design Files
